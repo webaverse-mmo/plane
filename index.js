@@ -185,7 +185,7 @@ export default () => {
         })
     }
 
-    const modelName = 'plane/plane.glb';
+    const modelName = 'plane.glb';
     let p1 = loadModel( { filePath: baseUrl, fileName: modelName, pos: { x: 0, y: 0, z: 0 } } ).then( result => { vehicleObj = result } );
 
     let loadPromisesArr = [ p1 ];
@@ -289,25 +289,16 @@ export default () => {
                camera.add( listener );
 
                engineSound = new THREE.PositionalAudio( listener );
-               crashSound = new THREE.PositionalAudio( listener );
                const audioLoader = new THREE.AudioLoader();
-                audioLoader.load( 'scenes/plane/idle.wav', function( buffer ) {
+                audioLoader.load( 'idle.wav', function( buffer ) {
                       engineSound.setBuffer( buffer );
                       engineSound.setRefDistance( 5 );
                       engineSound.setVolume( 0.5 );
                       engineSound.setLoop(true);
                       
                 });
-                audioLoader.load( 'scenes/car/crashTemp.ogg', function( buffer ) {
-                      crashSound.setBuffer( buffer );
-                      crashSound.setRefDistance( 5 );
-                      crashSound.setVolume( 0.5 );
-                      //engineSound.setLoop(true);
-                      
-                });
 
                 app.add(engineSound);
-                app.add(crashSound);
 
                 suspensionLengthArray[0] = 0.5;
                 suspensionLengthArray[1] = 0.5;
