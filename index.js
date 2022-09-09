@@ -100,6 +100,9 @@ export default () => {
     let linearVelocity = new THREE.Vector3();
     let angularVelocity = new THREE.Vector3();
 
+    let debugArray = [];
+    let debugPointArray = [];
+
 
     function onDocumentKeyDown(event) {
         var keyCode = event.which;
@@ -194,6 +197,22 @@ export default () => {
 
         app.add( vehicleObj );
 
+        app.setComponent('sit', 
+        {
+          "key": "sit",
+          "value": {
+            "subtype": "stand",
+            "mountType": "flying",
+            "sitOffset": [0, 0, 0],
+            "walkAnimation": "",
+            "walkAnimationHoldTime": 1,
+            "walkAnimationSpeedFactor": 0.1,
+            "speed": 0.02,
+            "damping": 0.99
+          }
+        }
+        );
+
         const physicsId = physics.addBoxGeometry(
           new THREE.Vector3(0, 1.5, 0),
           new THREE.Quaternion(),
@@ -246,31 +265,23 @@ export default () => {
                     rayArray[0] = o;
 
                   }
-                  if(o.name === "originF") {
+                  if(o.name === "originBL") {
                     rayArray[1] = o;
                     
                   }
-                  if(o.name === "originBL") {
-                    rayArray[2] = o;
-                    
-                  }
                   if(o.name === "originBR") {
-                    rayArray[3] = o;
+                    rayArray[2] = o;
                   }
                   if(o.name === "front") {
                     wheelArray[0] = o;
 
                   }
-                  if(o.name === "front") {
+                  if(o.name === "backL") {
                     wheelArray[1] = o;
                     
                   }
-                  if(o.name === "backL") {
-                    wheelArray[2] = o;
-                    
-                  }
                   if(o.name === "backR") {
-                    wheelArray[3] = o;
+                    wheelArray[2] = o;
                   }
                   //console.log(rayArray);
                   o.castShadow = true;
@@ -283,6 +294,27 @@ export default () => {
                   sceneWheels[i] = dum;
                   sceneWheels[i].updateMatrixWorld();
                   wheelArray[i].visible = false;
+
+                  const geometry = new THREE.BoxGeometry( .1, .1, .1 );
+                  let material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+
+                  const geometry2 = new THREE.BoxGeometry( .35, .35, .35 );
+                  let material2 = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+                  
+
+                  if(i === 0) {
+                    material = new THREE.MeshBasicMaterial( {color: 0xff0000} );
+                    material2 = new THREE.MeshBasicMaterial( {color: 0xff0000} );
+                  }
+
+                  const cube = new THREE.Mesh( geometry, material );
+                  const cube2 = new THREE.Mesh( geometry2, material2 );
+
+                  
+                  scene.add( cube );
+                  scene.add( cube2 );
+                  debugArray.push(cube);
+                  debugPointArray.push(cube2);
                 }
 
                const listener = new THREE.AudioListener();
@@ -392,25 +424,6 @@ export default () => {
 
       const _updateRide = () => {
 
-        if(!sitSpec && localPlayer.avatar) {
-            sitSpec = app.getComponent('sit');
-              if (sitSpec) {
-                let rideMesh = null;
-
-                const {instanceId} = app;
-
-                const rideBone = sitSpec.sitBone ? rideMesh.skeleton.bones.find(bone => bone.name === sitSpec.sitBone) : null;
-                const sitAction = {
-                  type: 'sit',
-                  time: 0,
-                  animation: sitSpec.subtype,
-                  controllingId: instanceId,
-                  controllingBone: rideBone,
-                };
-                localPlayer.setControlAction(sitAction);
-                app.wear(false);
-              }
-        } 
         if (sitSpec && localPlayer.avatar && rayArray.length > 0) {
           const {instanceId} = app;
 
@@ -418,7 +431,7 @@ export default () => {
 
           if(sitSpec) {
             if(sitSpec) {
-              localPlayer.avatar.app.visible = false;
+              //localPlayer.avatar.app.visible = false;
               let quat = new THREE.Quaternion(vehicle.quaternion.x, vehicle.quaternion.y, vehicle.quaternion.z, vehicle.quaternion.w);
               let right = new THREE.Vector3(1, 0, 0).applyQuaternion(quat);
               let globalUp = new THREE.Vector3(0, 1, 0);
@@ -430,7 +443,7 @@ export default () => {
                 engineSound.play();
               }
               
-              enginePower = 1;
+                enginePower = 1;
 
                 let lookVelocity = new THREE.Vector3();
                 physics.getLinearVelocity(vehicle, linearVelocity);
@@ -538,16 +551,17 @@ export default () => {
               let target = new THREE.Vector3();
               let target2 = new THREE.Vector3();
               let target3 = new THREE.Vector3();
-              let target4 = new THREE.Vector3();
                rayArray[0].getWorldPosition( target );
                rayArray[1].getWorldPosition( target2 );
                rayArray[2].getWorldPosition( target3 );
-               rayArray[3].getWorldPosition( target4 );
+              
 
-               pointArray[0] = physics.raycast(target, rayArray[0].quaternion);
-               pointArray[1] = physics.raycast(target2, rayArray[1].quaternion);
-               pointArray[2] = physics.raycast(target3, rayArray[2].quaternion);
-               pointArray[3] = physics.raycast(target4, rayArray[3].quaternion);
+               pointArray[0] = physics.raycast(target, downQuat);
+               pointArray[1] = physics.raycast(target2, downQuat);
+               pointArray[2] = physics.raycast(target3, downQuat);
+               
+
+               console.log(wheelArray.length, rayArray.length, pointArray.length);
 
               for (var i = 0; i < rayArray.length; i++) {
 
@@ -575,6 +589,14 @@ export default () => {
                     let crossedVec = tempAngular.cross(new THREE.Vector3().fromArray(pointArray[i].point).sub(vehicle.position));
 
                     let pointVel = tempLinear.add(crossedVec);
+
+                    // debug
+
+                    debugArray[i].position.copy(targetss);
+                    debugArray[i].updateMatrixWorld();
+                    
+                    debugPointArray[i].position.copy(new THREE.Vector3().fromArray(pointArray[i].point));
+                    debugPointArray[i].updateMatrixWorld();
 
                     let fx = 0;
                     let fy = 0;
@@ -611,6 +633,8 @@ export default () => {
                     suspensionForce2.x = up.x * (stiffnessForce + damperForce);
                     suspensionForce2.y = up.y * (stiffnessForce + damperForce);
                     suspensionForce2.z = up.z * (stiffnessForce + damperForce);
+
+                    
 
                     suspensionLengthArray[i] = springLength;
 
@@ -649,7 +673,7 @@ export default () => {
                     xForce.y = (right.y * -sidewayVelocity.x);
                     xForce.z = (right.z * -sidewayVelocity.x);
 
-                    if(pointArray[i] === pointArray[0] || pointArray[i] === pointArray[1]) {
+                    if(pointArray[i] === pointArray[0]) {
 
                         if(pointArray[i].distance < (50000000000)) {
                             
@@ -662,7 +686,8 @@ export default () => {
                                 physics.addForceAtPos(vehicle, brakeVec, targetss);
 
                             }*/
-                            physics.addForceAtPos(vehicle, suspensionForce2, targetss);
+                            //physics.addForceAtPos(vehicle, suspensionForce2.multiplyScalar(1), targetss);
+                            //console.log(suspensionForce2, "suspension force1");
                             if(pointArray[i] === pointArray[0]) {
                                 if(keyA) {
                                     //newRotVec.x = fx * right.x;
@@ -670,18 +695,18 @@ export default () => {
                                     //newRotVec.z = fx * right.z;
                                 }
                                 if(keyD) {
-                                    fx -= 5;
+                                    //fx -= 5;
                                     //newRotVec.x = fx * right.x;
                                     //newRotVec.y = fx * right.y;
                                     //newRotVec.z = fx * right.z;
                                     
                                 }
-                                physics.addForceAtPos(vehicle, new THREE.Vector3(newRotVec.x, newRotVec.y, newRotVec.z), targetss);
+                                //physics.addForceAtPos(vehicle, new THREE.Vector3(newRotVec.x, newRotVec.y, newRotVec.z), targetss);
                             }
 
                             if(pointArray[i] === pointArray[1]) {
                                 if(keyA) {
-                                    fx += 5;
+                                    //fx += 5;
                                     //newRotVec.x = fx * right.x;
                                     //newRotVec.y = fx * right.y;
                                     //newRotVec.z = fx * right.z;
@@ -692,7 +717,7 @@ export default () => {
                                     //newRotVec.z = fx * right.z;
                                     
                                 }
-                                physics.addForceAtPos(vehicle, new THREE.Vector3(newRotVec.x, newRotVec.y, newRotVec.z), targetss);
+                                //physics.addForceAtPos(vehicle, new THREE.Vector3(newRotVec.x, newRotVec.y, newRotVec.z), targetss);
                             }
                             
 
@@ -700,13 +725,14 @@ export default () => {
                         }
                         
                     }
-                    if(pointArray[i] === pointArray[2] || pointArray[i] === pointArray[3]) {
+                    if(pointArray[i]) {
                         if(pointArray[i].distance < (springLength + wheelRadius*2)) {
-                            physics.addForceAtPos(vehicle, suspensionForce2, targetss);
-                            let accVec = new THREE.Vector3();
-                            accVec.x = forward.x * moveSpeed * 0.5;
-                            accVec.y = forward.y * moveSpeed * 0.5;
-                            accVec.z = forward.z * moveSpeed * 0.5;
+                            physics.addForceAtPos(vehicle, suspensionForce2.multiplyScalar(0.005), targetss);
+                            //console.log(suspensionForce2, "suspension force2");
+                            // let accVec = new THREE.Vector3();
+                            // accVec.x = forward.x * moveSpeed * 0.5;
+                            // accVec.y = forward.y * moveSpeed * 0.5;
+                            // accVec.z = forward.z * moveSpeed * 0.5;
                             //physics.addForceAtPos(vehicle, accVec, targetss);
                             
                         }
@@ -727,7 +753,7 @@ export default () => {
                     
 
                     if(pointArray[i].distance < (100000)) {
-                        if(pointArray[i] === pointArray[3]) {
+                        if(pointArray[i] === pointArray[2]) {
 
                            
                               
@@ -770,7 +796,11 @@ export default () => {
                         localPos.y = pointArray[i].point[1] + wheelRadius;
                         vehicle.worldToLocal(localPos);
 
+                        //console.log(pointArray[i].distance);
+
                     if(pointArray[i].distance < (suspensionLengthArray[i] + (wheelRadius*1.5))) {
+
+                      console.log("we here");
                       sceneWheels[i].position.setFromMatrixPosition( wheelArray[i].matrixWorld );
                       sceneWheels[i].position.y = pointArray[i].point[1] + wheelRadius;
 
@@ -779,24 +809,25 @@ export default () => {
                       sceneWheels[i].quaternion.copy(vehicle.quaternion);
 
                       if(sceneWheels[i] === sceneWheels[2]) {
-                        sceneWheels[i].rotateX(wheelRpm);
+                        //sceneWheels[i].rotateX(wheelRpm);
                       }
 
                       if(sceneWheels[i] === sceneWheels[3]) {
-                        sceneWheels[i].rotateX(wheelRpm);
+                        //sceneWheels[i].rotateX(wheelRpm);
                       }
               
                       if(sceneWheels[i] === sceneWheels[0]) {
-                        var clampedRot = THREE.Math.clamp(newRot, -35, 35);
-                        sceneWheels[i].rotateY(THREE.Math.degToRad(clampedRot));
+                        //var clampedRot = THREE.Math.clamp(newRot, -35, 35);
+                        //sceneWheels[i].rotateY(THREE.Math.degToRad(clampedRot));
                       }
 
                       if(sceneWheels[i] === sceneWheels[1]) {
-                        var clampedRot = THREE.Math.clamp(newRot, -35, 35);
-                        sceneWheels[i].rotateY(THREE.Math.degToRad(clampedRot));
+                        //var clampedRot = THREE.Math.clamp(newRot, -35, 35);
+                        //sceneWheels[i].rotateY(THREE.Math.degToRad(clampedRot));
                       }
                     }
                     else {
+                      console.log("we here instead");
                       sceneWheels[i].position.setFromMatrixPosition( wheelArray[i].matrixWorld );
                       sceneWheels[i].quaternion.copy(vehicle.quaternion);
                       sceneWheels[i].updateMatrixWorld();
@@ -812,7 +843,7 @@ export default () => {
               let rasa = new THREE.Vector3();
               physics.getLinearVelocity(vehicle, rasa);
 
-              let wheelForward = new THREE.Vector3(0, 0, 1).applyQuaternion(sceneWheels[0].quaternion);
+              //let wheelForward = new THREE.Vector3(0, 0, 1).applyQuaternion(sceneWheels[0].quaternion);
               
               _updateEngine();
               _updateControlSurfaces();
@@ -841,8 +872,11 @@ export default () => {
     useActivate(() => {
 
       sitSpec = app.getComponent('sit');
+      //console.log("activate 1", app, sitSpec);
       if (sitSpec) {
         let rideMesh = null;
+
+        //console.log("activate 2");
 
         const {instanceId} = app;
 
@@ -850,7 +884,7 @@ export default () => {
         const sitAction = {
           type: 'sit',
           time: 0,
-          animation: sitSpec.subtype,
+          animation: 'stand',
           controllingId: instanceId,
           controllingBone: rideBone,
         };
