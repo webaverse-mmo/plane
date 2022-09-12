@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import metaversefile from 'metaversefile';
 import { Vector3 } from 'three';
-import Simplex from './simplex-noise.js';
 
 const {useApp, useFrame, useLoaders, usePhysics, useCleanup, useLocalPlayer, useActivate, useScene, useInternals} = metaversefile;
 
@@ -30,9 +29,6 @@ export default () => {
     const physicsIds = [];
     const localPlayer = useLocalPlayer();
     const {camera} = useInternals();
-
-    const seed = 'wind';
-    const shakeNoise = new Simplex(seed);
 
     let vehicleObj;
 
