@@ -322,7 +322,7 @@ export default () => {
 
                engineSound = new THREE.PositionalAudio( listener );
                const audioLoader = new THREE.AudioLoader();
-                audioLoader.load( 'idle.wav', function( buffer ) {
+                audioLoader.load( baseUrl + 'idle.wav', function( buffer ) {
                       engineSound.setBuffer( buffer );
                       engineSound.setRefDistance( 5 );
                       engineSound.setVolume( 0.5 );
