@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import metaversefile from 'metaversefile';
 import { Vector3 } from 'three';
+import Simplex from './simplex-noise.js';
 
 const {useApp, useFrame, useLoaders, usePhysics, useCleanup, useLocalPlayer, useActivate, useScene, useInternals} = metaversefile;
 
@@ -29,6 +30,9 @@ export default () => {
     const physicsIds = [];
     const localPlayer = useLocalPlayer();
     const {camera} = useInternals();
+
+    const seed = 'wind';
+    const shakeNoise = new Simplex(seed);
 
     let vehicleObj;
 
@@ -422,6 +426,15 @@ export default () => {
         }*/
       }
 
+      const _brake = (index) => {
+
+        let brakeForce = new THREE.Vector3(0,0,-5).applyQuaternion(vehicle.quaternion);
+        let targetPos = new THREE.Vector3();
+        rayArray[index].getWorldPosition(targetPos);
+        physics.addForceAtPos(vehicle, brakeForce.multiplyScalar(0.005), targetPos);
+
+      }
+
       const _updateRide = () => {
 
         if (rayArray.length > 0 && sitSpec) {
@@ -732,7 +745,16 @@ export default () => {
                     }
                     if(pointArray[i]) {
                         if(pointArray[i].distance < (springLength + wheelRadius*2)) {
+                            let friction = new THREE.Vector3(0,0,-1).applyQuaternion(vehicle.quaternion);
+
+                            if(actualSpeed > 0) {
+                              suspensionForce2.add(friction);
+                            }
+
+                            //let force = suspensionForce2.multiplyScalar(0.005);
                             physics.addForceAtPos(vehicle, suspensionForce2.multiplyScalar(0.005), targetss);
+                            
+
                             //console.log(suspensionForce2, "suspension force2");
                             // let accVec = new THREE.Vector3();
                             // accVec.x = forward.x * moveSpeed * 0.5;
@@ -782,6 +804,22 @@ export default () => {
 
                               tempAngular.add(angularInput);
 
+                              //angularInput.z += Math.sin(timeDiff/1000);
+
+                              //const ndc = f => (-0.5 + f) * 2;
+                              //let index = 0;
+                              //const randomValue = () => ndc(shakeNoise.noise1D(baseTime + timeOffset * index++));
+
+                              // const randomValue = shakeNoise.noise1D(angularInput.z);
+
+                              // let turbulence = Math.random() - 0.5;
+                              // console.log(randomValue);
+                              // //angularInput.x += randomValue/100;
+                              // //angularInput.y += randomValue/100;
+                              // angularInput.z += (randomValue/100);
+
+                              
+
                               physics.setAngularVelocity(vehicle, angularInput, true);
                               physics.setVelocity(vehicle, linearVelocity, true);
 
@@ -805,7 +843,14 @@ export default () => {
 
                     if(pointArray[i].distance < (suspensionLengthArray[i] + (wheelRadius*2))) {
 
-                      console.log("we here");
+                      // On ground
+
+                      if(keyX && actualSpeed > 0) {
+                        _brake(i);
+                        //console.log("braking", actualSpeed)
+                      }
+
+                      //console.log("we here");
                       sceneWheels[i].position.setFromMatrixPosition( wheelArray[i].matrixWorld );
                       sceneWheels[i].position.y = pointArray[i].point[1] + wheelRadius;
 
