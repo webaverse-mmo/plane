@@ -311,10 +311,10 @@ export default () => {
                   const cube2 = new THREE.Mesh( geometry2, material2 );
 
                   
-                  scene.add( cube );
-                  scene.add( cube2 );
-                  debugArray.push(cube);
-                  debugPointArray.push(cube2);
+                  //scene.add( cube );
+                  //scene.add( cube2 );
+                  //debugArray.push(cube);
+                  //debugPointArray.push(cube2);
                 }
 
                const listener = new THREE.AudioListener();
@@ -345,7 +345,7 @@ export default () => {
         if(engineSound) {
 
             const rpmStartPoint = -500;
-            var spd = rpmStartPoint + (moveSpeed*3);
+            var spd = rpmStartPoint + (moveSpeed*30);
             engineSound.setDetune(spd);
 
         }
@@ -424,14 +424,14 @@ export default () => {
 
       const _updateRide = () => {
 
-        if (sitSpec && localPlayer.avatar && rayArray.length > 0) {
+        if (rayArray.length > 0 && sitSpec) {
           const {instanceId} = app;
 
           physics.disableGeometryQueries(vehicle);
 
           if(sitSpec) {
             if(sitSpec) {
-              //localPlayer.avatar.app.visible = false;
+              localPlayer.avatar.app.visible = false;
               let quat = new THREE.Quaternion(vehicle.quaternion.x, vehicle.quaternion.y, vehicle.quaternion.z, vehicle.quaternion.w);
               let right = new THREE.Vector3(1, 0, 0).applyQuaternion(quat);
               let globalUp = new THREE.Vector3(0, 1, 0);
@@ -467,15 +467,20 @@ export default () => {
 
               // IO
               if(keyShift) {
-                moveSpeed += powerFactor*8 * enginePower*35;
+                if(moveSpeed < 50) {
+                  moveSpeed += 1;
+                }
               }
               if(keyX) {
-                moveSpeed -= powerFactor*8 * enginePower*35;
+                if(moveSpeed > 0) {
+                  moveSpeed -= 1;
+                }
               }
-              if(keyW && actualSpeed > 0) {
+              //console.log(moveSpeed, actualSpeed);
+              if(keyW) {
                 angularInput.x += right.x * powerFactor * enginePower;
-                angularInput.x += right.x * powerFactor * enginePower;
-                angularInput.x += right.x * powerFactor * enginePower;
+                angularInput.y += right.y * powerFactor * enginePower;
+                angularInput.z += right.z * powerFactor * enginePower;
               }
               if(!keyW && actualSpeed < 0) {
                 //moveSpeed += powerFactor*2 * enginePower*5;
@@ -488,16 +493,16 @@ export default () => {
               }
               if(keyQ) {
                 //newRot += powerFactor * moveSpeed/10;
-                angularInput.x += up.x * powerFactor * enginePower;
-                angularInput.y += up.y * powerFactor * enginePower
-                angularInput.z += up.z * powerFactor * enginePower;
+                angularInput.x += up.x * powerFactor/2 * enginePower;
+                angularInput.y += up.y * powerFactor/2 * enginePower
+                angularInput.z += up.z * powerFactor/2 * enginePower;
                 //newRot = steeringAngle;
               }
               if (keyE) {
                 //newRot -= powerFactor * moveSpeed/10;
-                angularInput.x -= up.x * powerFactor * enginePower;
-                angularInput.y -= up.y * powerFactor * enginePower
-                angularInput.z -= up.z * powerFactor * enginePower;
+                angularInput.x -= up.x * powerFactor/2 * enginePower;
+                angularInput.y -= up.y * powerFactor/2 * enginePower
+                angularInput.z -= up.z * powerFactor/2 * enginePower;
                 //newRot = -steeringAngle;
               }
               if(keyA) {
@@ -561,7 +566,7 @@ export default () => {
                pointArray[2] = physics.raycast(target3, downQuat);
                
 
-               console.log(wheelArray.length, rayArray.length, pointArray.length);
+               //console.log(wheelArray.length, rayArray.length, pointArray.length);
 
               for (var i = 0; i < rayArray.length; i++) {
 
@@ -592,11 +597,11 @@ export default () => {
 
                     // debug
 
-                    debugArray[i].position.copy(targetss);
-                    debugArray[i].updateMatrixWorld();
+                    //debugArray[i].position.copy(targetss);
+                    //debugArray[i].updateMatrixWorld();
                     
-                    debugPointArray[i].position.copy(new THREE.Vector3().fromArray(pointArray[i].point));
-                    debugPointArray[i].updateMatrixWorld();
+                    //debugPointArray[i].position.copy(new THREE.Vector3().fromArray(pointArray[i].point));
+                    //debugPointArray[i].updateMatrixWorld();
 
                     let fx = 0;
                     let fy = 0;
@@ -798,7 +803,7 @@ export default () => {
 
                         //console.log(pointArray[i].distance);
 
-                    if(pointArray[i].distance < (suspensionLengthArray[i] + (wheelRadius*1.5))) {
+                    if(pointArray[i].distance < (suspensionLengthArray[i] + (wheelRadius*2))) {
 
                       console.log("we here");
                       sceneWheels[i].position.setFromMatrixPosition( wheelArray[i].matrixWorld );
@@ -827,7 +832,7 @@ export default () => {
                       }
                     }
                     else {
-                      console.log("we here instead");
+                      //console.log("we here instead");
                       sceneWheels[i].position.setFromMatrixPosition( wheelArray[i].matrixWorld );
                       sceneWheels[i].quaternion.copy(vehicle.quaternion);
                       sceneWheels[i].updateMatrixWorld();
